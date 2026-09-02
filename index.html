@@ -368,8 +368,7 @@
         /*
          * Phase-cancelled acoustic click generator:
          * Uses positive primary pulse on target ear and inverted phase pulse on opposing ear.
-         * Headphones: Distinct directional click heard in target ear.
-         * Open Laptop Speakers: Soundwaves collide in physical air space and cancel out.
+         * Tuned for high headphone sensitivity (low gain sine wave) vs laptop speaker cancellation.
          */
         function createSubtleClick(panValue) {
             if (!audioCtx) return;
@@ -379,30 +378,31 @@
             const cancelGain = audioCtx.createGain();
             const merger = audioCtx.createChannelMerger(2);
 
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            // Sine wave avoids high-frequency harmonic leakage off laptop casings
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
 
             const now = audioCtx.currentTime;
 
-            // Primary pulse envelope (+0.08 peak)
+            // Primary pulse envelope - reduced to 0.025 peak for extreme subtlety on speakers
             primaryGain.gain.setValueAtTime(0, now);
-            primaryGain.gain.linearRampToValueAtTime(0.08, now + 0.005);
-            primaryGain.gain.linearRampToValueAtTime(0, now + 0.04);
+            primaryGain.gain.linearRampToValueAtTime(0.025, now + 0.003);
+            primaryGain.gain.linearRampToValueAtTime(0, now + 0.025);
 
-            // Phase-inverted cancellation envelope (-0.05 peak)
+            // Phase-inverted cancellation envelope (-0.022 peak)
             cancelGain.gain.setValueAtTime(0, now);
-            cancelGain.gain.linearRampToValueAtTime(-0.05, now + 0.005);
-            cancelGain.gain.linearRampToValueAtTime(0, now + 0.04);
+            cancelGain.gain.linearRampToValueAtTime(-0.022, now + 0.003);
+            cancelGain.gain.linearRampToValueAtTime(0, now + 0.025);
 
             osc.connect(primaryGain);
             osc.connect(cancelGain);
 
             if (panValue === -1) {
-                // LEFT CLICK: Primary (+0.08) to Left ear (0), Inverted (-0.05) to Right ear (1)
+                // LEFT CLICK: Primary (+0.025) to Left ear (0), Inverted (-0.022) to Right ear (1)
                 primaryGain.connect(merger, 0, 0);
                 cancelGain.connect(merger, 0, 1);
             } else {
-                // RIGHT CLICK: Inverted (-0.05) to Left ear (0), Primary (+0.08) to Right ear (1)
+                // RIGHT CLICK: Inverted (-0.022) to Left ear (0), Primary (+0.025) to Right ear (1)
                 cancelGain.connect(merger, 0, 0);
                 primaryGain.connect(merger, 0, 1);
             }
@@ -410,7 +410,7 @@
             merger.connect(audioCtx.destination);
 
             osc.start(now);
-            osc.stop(now + 0.05);
+            osc.stop(now + 0.03);
         }
 
         function createLowRumble() {
