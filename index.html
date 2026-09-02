@@ -9,13 +9,13 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
         
-        /* Custom neon glow for active elements */
+        /* Custom neon glow for active audio playback */
         .neon-border {
-            box-shadow: 0 0 10px rgba(6, 182, 212, 0.5), inset 0 0 10px rgba(6, 182, 212, 0.2);
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.6), inset 0 0 8px rgba(6, 182, 212, 0.3);
             border-color: #06b6d4;
         }
         
-        /* Audio visualizer fake animation */
+        /* Audio visualizer bar animations */
         .bar {
             width: 4px;
             background-color: #06b6d4;
@@ -52,11 +52,19 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #475569;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
 
-    <div class="max-w-3xl w-full bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden relative min-h-[500px] flex flex-col">
+    <div class="max-w-3xl w-full bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden relative min-h-[520px] flex flex-col">
         
         <!-- Header -->
         <div class="bg-slate-900 px-6 py-4 border-b border-slate-700 flex justify-between items-center shrink-0">
@@ -100,7 +108,7 @@
                     
                     <div id="regError" class="text-rose-400 text-sm hidden">Please fill out all fields correctly.</div>
                     
-                    <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-8 rounded-lg transition-all mt-4">
+                    <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-8 rounded-lg transition-all mt-4 shadow-lg shadow-cyan-600/30">
                         Continue
                     </button>
                 </form>
@@ -110,17 +118,17 @@
         <!-- SCREEN 2: Welcome / Instructions -->
         <div id="welcomeScreen" class="p-8 text-center flex-grow flex flex-col justify-center hidden">
             <div class="mb-6 flex justify-center">
-                <div class="bg-slate-700 p-4 rounded-full">
+                <div class="bg-slate-700/60 p-4 rounded-full border border-slate-600">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                     </svg>
                 </div>
             </div>
             <h2 class="text-2xl font-bold mb-4">Put On Your Headphones</h2>
-            <p class="text-slate-300 mb-6 max-w-lg mx-auto">
-                This task simulates subtle audio artifacts (low rumbles, hard panning, micro-clicks). 
-                <strong>Laptop speakers will fail to reproduce these sounds accurately.</strong><br><br>
-                Listen to the TTS voice carefully. Identify the hidden audio artifact playing in the background. You have <span class="font-bold text-cyan-400" id="maxRoundsDisplay">5</span> rounds.
+            <p class="text-slate-300 mb-6 max-w-lg mx-auto leading-relaxed">
+                This audit tests for phase-inverted micro-clicks and low frequency rumbles. 
+                <strong class="text-cyan-400">Laptop speakers will cancel or muffle these artifacts.</strong><br><br>
+                Listen to the voice prompt carefully. You get up to <span class="font-bold text-cyan-400">3 plays per scenario</span> across <span class="font-bold text-cyan-400" id="maxRoundsDisplay">5</span> rounds.
             </p>
             <button id="startBtn" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 shadow-lg shadow-cyan-500/30">
                 Acknowledge & Start
@@ -134,14 +142,14 @@
                 <div class="flex justify-between items-center mb-4">
                     <span class="text-xs font-semibold tracking-widest text-slate-400 uppercase">Current Transcript</span>
                     
-                    <!-- Fake Audio Visualizer -->
+                    <!-- Audio Visualizer -->
                     <div id="visualizer" class="h-6 flex items-end gap-1 opacity-50">
                         <div class="idle-bar"></div><div class="idle-bar"></div><div class="idle-bar"></div><div class="idle-bar"></div><div class="idle-bar"></div>
                     </div>
                 </div>
                 
                 <p id="transcriptText" class="text-xl font-medium text-slate-200 leading-relaxed min-h-[80px]">
-                    Press "Play Audio" to load the next scenario.
+                    Press "Play Audio" to load the scenario.
                 </p>
 
                 <!-- Feedback Toast -->
@@ -155,40 +163,41 @@
             </div>
 
             <!-- Controls and Grid -->
-            <div class="flex flex-col md:flex-row gap-6">
+            <div class="flex flex-col sm:flex-row gap-6 items-stretch">
                 <!-- Play Control -->
                 <div class="flex-shrink-0 flex items-center justify-center">
-                    <button id="playAudioBtn" class="bg-slate-700 hover:bg-slate-600 text-white p-6 rounded-full transition-all flex flex-col items-center gap-2 group border border-slate-600 hover:border-cyan-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-cyan-400 group-hover:text-cyan-300" viewBox="0 0 20 20" fill="currentColor">
+                    <button id="playAudioBtn" class="bg-slate-700 hover:bg-slate-600 text-white p-5 rounded-2xl transition-all flex flex-col items-center justify-center gap-2 group border border-slate-600 hover:border-cyan-400 min-w-[150px] w-full sm:w-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-cyan-400 group-hover:text-cyan-300 transition-colors" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
                         </svg>
-                        <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Play Audio</span>
+                        <span id="playBtnText" class="text-xs font-bold uppercase tracking-wider text-slate-300">Play Audio</span>
+                        <span id="playCountBadge" class="text-[11px] bg-slate-800 text-cyan-400 font-semibold px-2.5 py-0.5 rounded-full border border-slate-600">3 plays left</span>
                     </button>
                 </div>
 
                 <!-- Answer Grid -->
                 <div class="flex-grow grid grid-cols-1 sm:grid-cols-2 gap-3" id="answerGrid">
-                    <button class="answer-btn bg-slate-800 hover:bg-slate-700 border border-slate-600 text-left p-4 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed" data-artifact="left-click" disabled>
+                    <button class="answer-btn bg-slate-800 hover:bg-slate-700 border border-slate-600 text-left p-4 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed" data-artifact="left-click" disabled>
                         <span class="block font-bold text-slate-200">Left-Ear Click</span>
-                        <span class="text-xs text-slate-400">Subtle click in left channel</span>
+                        <span class="text-xs text-slate-400">Micro-click in left ear channel</span>
                     </button>
-                    <button class="answer-btn bg-slate-800 hover:bg-slate-700 border border-slate-600 text-left p-4 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed" data-artifact="right-click" disabled>
+                    <button class="answer-btn bg-slate-800 hover:bg-slate-700 border border-slate-600 text-left p-4 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed" data-artifact="right-click" disabled>
                         <span class="block font-bold text-slate-200">Right-Ear Click</span>
-                        <span class="text-xs text-slate-400">Subtle click in right channel</span>
+                        <span class="text-xs text-slate-400">Micro-click in right ear channel</span>
                     </button>
-                    <button class="answer-btn bg-slate-800 hover:bg-slate-700 border border-slate-600 text-left p-4 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed" data-artifact="low-rumble" disabled>
+                    <button class="answer-btn bg-slate-800 hover:bg-slate-700 border border-slate-600 text-left p-4 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed" data-artifact="low-rumble" disabled>
                         <span class="block font-bold text-slate-200">Low-Frequency Rumble</span>
-                        <span class="text-xs text-slate-400">40Hz hum (Invisible to speakers)</span>
+                        <span class="text-xs text-slate-400">45Hz bass hum</span>
                     </button>
-                    <button class="answer-btn bg-slate-800 hover:bg-slate-700 border border-slate-600 text-left p-4 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed" data-artifact="clean" disabled>
+                    <button class="answer-btn bg-slate-800 hover:bg-slate-700 border border-slate-600 text-left p-4 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed" data-artifact="clean" disabled>
                         <span class="block font-bold text-slate-200">Clean Audio</span>
-                        <span class="text-xs text-slate-400">No artifacts detected</span>
+                        <span class="text-xs text-slate-400">No background artifacts</span>
                     </button>
                 </div>
             </div>
             
-            <div class="mt-4 text-center">
-                <p class="text-sm text-slate-500">Round <span id="currentRoundDisplay">1</span> of <span class="maxRoundsLabel">5</span></p>
+            <div class="mt-6 text-center">
+                <p class="text-xs text-slate-500 uppercase tracking-wider">Round <span id="currentRoundDisplay" class="font-bold text-slate-300">1</span> of <span class="maxRoundsLabel font-bold text-slate-300">5</span></p>
             </div>
         </div>
 
@@ -199,18 +208,18 @@
                 <p class="text-slate-400">Here is your performance summary.</p>
             </div>
 
-            <div class="bg-slate-900 rounded-xl p-6 mb-6">
+            <div class="bg-slate-900 rounded-xl p-6 mb-6 border border-slate-700">
                 <div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-700">
-                    <span class="text-slate-300">Final Score:</span>
+                    <span class="text-slate-300 font-medium">Final Score:</span>
                     <span class="text-2xl font-bold text-cyan-400" id="finalScoreDisplay">0 / 5</span>
                 </div>
                 <div class="max-h-48 overflow-y-auto pr-2 custom-scrollbar space-y-2 text-sm" id="itemizedScoreList">
-                    <!-- Itemized scores will be injected here -->
+                    <!-- Itemized scores injected dynamically -->
                 </div>
             </div>
 
             <!-- Submission Status Area -->
-            <div id="submissionStatus" class="bg-slate-700/50 p-4 rounded-lg flex items-center justify-center gap-3">
+            <div id="submissionStatus" class="bg-slate-700/50 p-4 rounded-lg flex items-center justify-center gap-3 border border-slate-600">
                 <div class="spinner" id="submitSpinner"></div>
                 <span id="submitText" class="text-slate-200 font-medium">Submitting results to server...</span>
             </div>
@@ -242,21 +251,23 @@
 
     <script>
         // --- Configuration ---
-        // REPLACE THE STRING BELOW WITH YOUR ACTUAL GOOGLE APPS SCRIPT WEB APP URL
         const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx-tAh3VDOhsOADwuNYl3oBEVgH3_0VkydZfu_V5hidrqXrNMBV9n7aqvh8l6LsOP5x/exec"; 
         let APPS_SCRIPT_URL = localStorage.getItem('audioAudit_scriptUrl') || DEFAULT_SCRIPT_URL;
         const MAX_ROUNDS = 5;
+        const MAX_PLAYS_PER_ROUND = 3;
 
         // --- Game State ---
         let playerData = { name: '', email: '' };
-        let sessionData = []; // Stores data per round
+        let sessionData = []; 
         let currentRound = 1;
         let score = 0;
+        let playsRemaining = MAX_PLAYS_PER_ROUND;
         
         let currentArtifact = null;
         let audioCtx = null;
         let isPlaying = false;
-        
+        let sessionArtifacts = []; 
+
         // --- Transcripts Database ---
         const transcripts = [
             "The quick evaluation of the parameter requires strict attention to detail.",
@@ -288,30 +299,25 @@
         const visualizer = document.getElementById('visualizer');
         const feedbackToast = document.getElementById('feedbackToast');
         
-        // End screen elements
         const finalScoreDisplay = document.getElementById('finalScoreDisplay');
         const itemizedScoreList = document.getElementById('itemizedScoreList');
         const submitSpinner = document.getElementById('submitSpinner');
         const submitText = document.getElementById('submitText');
         const submissionStatus = document.getElementById('submissionStatus');
 
-        // Settings modal elements
         const settingsModal = document.getElementById('settingsModal');
         const openSettingsBtn = document.getElementById('openSettingsBtn');
         const closeSettingsBtn = document.getElementById('closeSettingsBtn');
         const saveSettingsBtn = document.getElementById('saveSettingsBtn');
         const scriptUrlInput = document.getElementById('scriptUrlInput');
 
-        // Setup max rounds display
         document.getElementById('maxRoundsDisplay').textContent = MAX_ROUNDS;
         document.querySelectorAll('.maxRoundsLabel').forEach(el => el.textContent = MAX_ROUNDS);
 
-        // --- Event Listeners ---
         form.addEventListener('submit', handleRegistration);
         startBtn.addEventListener('click', showGameScreen);
         playAudioBtn.addEventListener('click', playScenario);
         
-        // Settings listeners
         openSettingsBtn.addEventListener('click', () => {
             scriptUrlInput.value = APPS_SCRIPT_URL;
             settingsModal.classList.remove('hidden');
@@ -330,7 +336,7 @@
         function switchScreen(activeScreen) {
             Object.values(screens).forEach(screen => screen.classList.add('hidden'));
             screens[activeScreen].classList.remove('hidden');
-            screens[activeScreen].classList.add('flex'); // Maintain flex layout
+            screens[activeScreen].classList.add('flex'); 
         }
 
         function handleRegistration(e) {
@@ -350,16 +356,8 @@
             switchScreen('welcome');
         }
 
-        function showGameScreen() {
-            initAudioContext();
-            switchScreen('game');
-            updateScoreDisplay();
-            loadNextScenario();
-        }
-
         function initAudioContext() {
             if (!audioCtx) {
-                // Must be initialized after a user gesture
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
             if (audioCtx.state === 'suspended') {
@@ -367,28 +365,52 @@
             }
         }
 
+        /*
+         * Phase-cancelled acoustic click generator:
+         * Uses positive primary pulse on target ear and inverted phase pulse on opposing ear.
+         * Headphones: Distinct directional click heard in target ear.
+         * Open Laptop Speakers: Soundwaves collide in physical air space and cancel out.
+         */
         function createSubtleClick(panValue) {
             if (!audioCtx) return;
+
             const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            const panner = audioCtx.createStereoPanner();
+            const primaryGain = audioCtx.createGain();
+            const cancelGain = audioCtx.createGain();
+            const merger = audioCtx.createChannelMerger(2);
 
             osc.type = 'square';
-            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-            
-            // Envelope for a sharp click
-            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 0.01);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
-            
-            panner.pan.value = panValue;
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
 
-            osc.connect(gainNode);
-            gainNode.connect(panner);
-            panner.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
 
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.1);
+            // Primary pulse envelope (+0.08 peak)
+            primaryGain.gain.setValueAtTime(0, now);
+            primaryGain.gain.linearRampToValueAtTime(0.08, now + 0.005);
+            primaryGain.gain.linearRampToValueAtTime(0, now + 0.04);
+
+            // Phase-inverted cancellation envelope (-0.05 peak)
+            cancelGain.gain.setValueAtTime(0, now);
+            cancelGain.gain.linearRampToValueAtTime(-0.05, now + 0.005);
+            cancelGain.gain.linearRampToValueAtTime(0, now + 0.04);
+
+            osc.connect(primaryGain);
+            osc.connect(cancelGain);
+
+            if (panValue === -1) {
+                // LEFT CLICK: Primary (+0.08) to Left ear (0), Inverted (-0.05) to Right ear (1)
+                primaryGain.connect(merger, 0, 0);
+                cancelGain.connect(merger, 0, 1);
+            } else {
+                // RIGHT CLICK: Inverted (-0.05) to Left ear (0), Primary (+0.08) to Right ear (1)
+                cancelGain.connect(merger, 0, 0);
+                primaryGain.connect(merger, 0, 1);
+            }
+
+            merger.connect(audioCtx.destination);
+
+            osc.start(now);
+            osc.stop(now + 0.05);
         }
 
         function createLowRumble() {
@@ -399,40 +421,89 @@
             osc.type = 'sine';
             osc.frequency.setValueAtTime(45, audioCtx.currentTime); 
             
-            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.5);
-            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime + 1.5);
-            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 2.0);
+            const now = audioCtx.currentTime;
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.3, now + 0.5);
+            gainNode.gain.setValueAtTime(0.3, now + 1.5);
+            gainNode.gain.linearRampToValueAtTime(0, now + 2.0);
 
             osc.connect(gainNode);
             gainNode.connect(audioCtx.destination);
 
-            osc.start();
-            osc.stop(audioCtx.currentTime + 2.1);
+            osc.start(now);
+            osc.stop(now + 2.1);
+        }
+
+        function initializeSessionArtifacts() {
+            // Guarantee balanced pool containing all 4 types + 1 wildcard round
+            sessionArtifacts = ['left-click', 'right-click', 'low-rumble', 'clean'];
+            sessionArtifacts.push(artifactTypes[Math.floor(Math.random() * artifactTypes.length)]);
+            
+            // Fisher-Yates shuffle
+            for (let i = sessionArtifacts.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [sessionArtifacts[i], sessionArtifacts[j]] = [sessionArtifacts[j], sessionArtifacts[i]];
+            }
+        }
+
+        function showGameScreen() {
+            initAudioContext();
+            initializeSessionArtifacts(); 
+            switchScreen('game');
+            updateScoreDisplay();
+            loadNextScenario();
         }
 
         function loadNextScenario() {
             currentRoundDisplay.textContent = currentRound;
             const randomText = transcripts[Math.floor(Math.random() * transcripts.length)];
-            currentArtifact = artifactTypes[Math.floor(Math.random() * artifactTypes.length)];
+            
+            currentArtifact = sessionArtifacts.pop();
             
             transcriptText.textContent = randomText;
             transcriptText.dataset.text = randomText; 
             
+            playsRemaining = MAX_PLAYS_PER_ROUND;
+            updatePlayButtonUI();
+            
             enableAnswerButtons(false);
-            playAudioBtn.disabled = false;
-            playAudioBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        function updatePlayButtonUI() {
+            const playBtnText = document.getElementById('playBtnText');
+            const playCountBadge = document.getElementById('playCountBadge');
+
+            if (isPlaying) {
+                playBtnText.textContent = "Playing...";
+                playAudioBtn.disabled = true;
+                playAudioBtn.classList.add('opacity-50', 'cursor-not-allowed', 'neon-border');
+                return;
+            }
+
+            playAudioBtn.classList.remove('neon-border');
+
+            if (playsRemaining <= 0) {
+                playBtnText.textContent = "No Plays Left";
+                playCountBadge.textContent = "0 plays left";
+                playCountBadge.className = "text-[11px] bg-slate-900 text-slate-500 font-semibold px-2.5 py-0.5 rounded-full border border-slate-700";
+                playAudioBtn.disabled = true;
+                playAudioBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                playBtnText.textContent = playsRemaining === MAX_PLAYS_PER_ROUND ? "Play Audio" : "Replay Audio";
+                playCountBadge.textContent = `${playsRemaining} play${playsRemaining > 1 ? 's' : ''} left`;
+                playCountBadge.className = "text-[11px] bg-slate-800 text-cyan-400 font-semibold px-2.5 py-0.5 rounded-full border border-slate-600";
+                playAudioBtn.disabled = false;
+                playAudioBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
         }
 
         function playScenario() {
-            if (isPlaying) return;
+            if (isPlaying || playsRemaining <= 0) return;
             initAudioContext();
             
             isPlaying = true;
-            playAudioBtn.disabled = true;
-            playAudioBtn.classList.add('opacity-50', 'cursor-not-allowed', 'neon-border');
+            updatePlayButtonUI();
             setVisualizerState(true);
-            enableAnswerButtons(false);
 
             window.speechSynthesis.cancel(); 
 
@@ -443,7 +514,7 @@
             utterance.pitch = 1.0;
 
             const estimatedDurationMs = (text.length / 15) * 1000;
-            const injectTime = Math.random() * (estimatedDurationMs * 0.5) + (estimatedDurationMs * 0.2); 
+            const injectTime = Math.random() * (estimatedDurationMs * 0.4) + (estimatedDurationMs * 0.2); 
 
             let artifactTimeout;
 
@@ -455,8 +526,9 @@
 
             utterance.onend = () => {
                 isPlaying = false;
+                playsRemaining--;
                 setVisualizerState(false);
-                playAudioBtn.classList.remove('neon-border');
+                updatePlayButtonUI();
                 enableAnswerButtons(true);
                 clearTimeout(artifactTimeout);
             };
@@ -464,6 +536,7 @@
             utterance.onerror = () => {
                 isPlaying = false;
                 setVisualizerState(false);
+                updatePlayButtonUI();
                 enableAnswerButtons(true);
             };
 
@@ -480,16 +553,20 @@
         }
 
         function handleGuess(guessedArtifact) {
+            window.speechSynthesis.cancel();
+            isPlaying = false;
+
             let isCorrect = (guessedArtifact === currentArtifact);
             if (isCorrect) score++;
             
-            // Record data for this round
+            // Record scenario details
             sessionData.push({
                 round: currentRound,
                 transcript: transcriptText.dataset.text,
                 actualArtifact: getArtifactName(currentArtifact),
                 guessedArtifact: getArtifactName(guessedArtifact),
-                isCorrect: isCorrect
+                isCorrect: isCorrect,
+                replaysUsed: MAX_PLAYS_PER_ROUND - playsRemaining
             });
 
             showFeedback(isCorrect, guessedArtifact);
@@ -504,12 +581,10 @@
                     currentRound++;
                     loadNextScenario();
                 }
-            }, 2500);
+            }, 2300);
         }
 
         function updateScoreDisplay() {
-            scoreDisplay.textContent = `${score} / ${currentRound - 1 > 0 ? currentRound - 1 : (currentRound===1 && sessionData.length===0 ? 0 : currentRound)}`;
-            // Edge case handling for display before round 1 completes
             if(sessionData.length > 0) {
                  scoreDisplay.textContent = `${score} / ${sessionData.length}`;
             } else {
@@ -532,12 +607,12 @@
                 icon.textContent = "✅";
                 title.textContent = "Accurate Rating!";
                 title.className = "text-2xl font-bold text-emerald-400 mb-1";
-                msg.textContent = `You correctly identified: ${getArtifactName(currentArtifact)}`;
+                msg.textContent = `Correct! Identified: ${getArtifactName(currentArtifact)}`;
             } else {
                 icon.textContent = "❌";
-                title.textContent = "Missed Artifact!";
+                title.textContent = "Incorrect Rating";
                 title.className = "text-2xl font-bold text-rose-400 mb-1";
-                msg.innerHTML = `You guessed <strong>${getArtifactName(guess)}</strong>.<br>The actual audio was: <strong>${getArtifactName(currentArtifact)}</strong>.`;
+                msg.innerHTML = `You guessed <strong>${getArtifactName(guess)}</strong>.<br>Actual audio was: <strong>${getArtifactName(currentArtifact)}</strong>.`;
             }
 
             enableAnswerButtons(false);
@@ -553,19 +628,18 @@
         function endGame() {
             switchScreen('end');
             
-            // Populate end screen stats
             finalScoreDisplay.textContent = `${score} / ${MAX_ROUNDS}`;
             
             itemizedScoreList.innerHTML = sessionData.map(data => `
-                <div class="flex justify-between items-center bg-slate-800 p-3 rounded border ${data.isCorrect ? 'border-emerald-900/50' : 'border-rose-900/50'}">
+                <div class="flex justify-between items-center bg-slate-800 p-3 rounded-lg border ${data.isCorrect ? 'border-emerald-900/50' : 'border-rose-900/50'}">
                     <div>
-                        <div class="font-bold text-slate-200">Round ${data.round}</div>
-                        <div class="text-xs text-slate-400">Actual: ${data.actualArtifact}</div>
+                        <div class="font-bold text-slate-200">Round ${data.round}: ${data.actualArtifact}</div>
+                        <div class="text-xs text-slate-400">Replays used: ${data.replaysUsed}</div>
                     </div>
                     <div>
                         ${data.isCorrect 
-                            ? '<span class="text-emerald-400 text-lg">✅</span>' 
-                            : `<span class="text-rose-400 text-sm">Guessed: ${data.guessedArtifact} ❌</span>`}
+                            ? '<span class="text-emerald-400 text-lg font-bold">✅ Correct</span>' 
+                            : `<span class="text-rose-400 text-xs font-semibold">Guessed: ${data.guessedArtifact} ❌</span>`}
                     </div>
                 </div>
             `).join('');
@@ -574,7 +648,7 @@
         }
 
         function submitDataToAppScript() {
-            if (!APPS_SCRIPT_URL) {
+            if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("YOUR_SCRIPT_ID")) {
                 setTimeout(() => {
                     submitSpinner.style.display = 'none';
                     submissionStatus.className = 'bg-amber-900/30 border border-amber-800 p-4 rounded-lg flex items-center justify-center gap-3 text-amber-400';
@@ -591,8 +665,6 @@
                 roundDetails: sessionData
             };
 
-            // Using standard fetch POST. 
-            // NOTE: Content-Type text/plain avoids CORS preflight checks in Google Apps Script
             fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
                 headers: {
@@ -600,9 +672,7 @@
                 },
                 body: JSON.stringify(payload)
             })
-            .then(response => {
-                // If using 'no-cors' mode (sometimes needed), response.ok will be false and status 0.
-                // Assuming standard configuration where text/plain avoids preflight.
+            .then(() => {
                 submitSpinner.style.display = 'none';
                 submissionStatus.className = 'bg-emerald-900/30 border border-emerald-800 p-4 rounded-lg flex items-center justify-center gap-3 text-emerald-400';
                 submitText.innerHTML = "✅ Results successfully saved to database.";
@@ -610,7 +680,6 @@
             .catch(error => {
                 console.error("Submission Error:", error);
                 submitSpinner.style.display = 'none';
-                // Show a warning but don't break the UI if the URL wasn't configured
                 submissionStatus.className = 'bg-amber-900/30 border border-amber-800 p-4 rounded-lg flex items-center justify-center gap-3 text-amber-400';
                 submitText.innerHTML = "⚠️ Audit complete (AppScript URL not configured or blocked).";
             });
@@ -638,7 +707,6 @@
             return names[id] || id;
         }
 
-        // Cleanup on unload
         window.addEventListener('beforeunload', () => window.speechSynthesis.cancel());
     </script>
 </body>
