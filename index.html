@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Audit: Headphone Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Custom neon glow for active elements */
+        .neon-border {
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.5), inset 0 0 10px rgba(6, 182, 212, 0.2);
+            border-color: #06b6d4;
+        }
+        
+        /* Audio visualizer fake animation */
+        .bar {
+            width: 4px;
+            background-color: #06b6d4;
+            border-radius: 2px;
+            animation: bounce 0.5s infinite alternate;
+        }
+        .bar:nth-child(2) { animation-delay: 0.1s; }
+        .bar:nth-child(3) { animation-delay: 0.2s; }
+        .bar:nth-child(4) { animation-delay: 0.15s; }
+        .bar:nth-child(5) { animation-delay: 0.05s; }
+        
+        @keyframes bounce {
+            0% { height: 4px; }
+            100% { height: 24px; }
+        }
+        
+        .idle-bar {
+            width: 4px;
+            height: 4px;
+            background-color: #475569;
+            border-radius: 2px;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top: 3px solid #06b6d4;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-3xl w-full bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden relative min-h-[500px] flex flex-col">
+        
+        <!-- Header -->
+        <div class="bg-slate-900 px-6 py-4 border-b border-slate-700 flex justify-between items-center shrink-0">
+            <div>
+                <h1 class="text-xl font-bold text-white flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    Audio Audit: Phase 1
+                </h1>
+                <p class="text-xs text-slate-400 mt-1">Headphone Verification Simulator</p>
+            </div>
+            <div class="text-right">
+                <div class="text-sm text-slate-400">Score</div>
+                <div class="text-2xl font-bold text-emerald-400" id="scoreDisplay">0 / 0</div>
+            </div>
+        </div>
+
+        <!-- SCREEN 1: Registration -->
+        <div id="registrationScreen" class="p-8 flex-grow flex flex-col justify-center relative">
+            <button id="openSettingsBtn" class="absolute top-4 right-4 text-slate-500 hover:text-cyan-400 transition-colors" title="System Settings">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </button>
+            
+            <div class="max-w-md mx-auto w-full">
+                <h2 class="text-3xl font-bold mb-2 text-center text-white">Rater Check-in</h2>
+                <p class="text-slate-400 text-center mb-8">Please enter your details to begin the audit simulation.</p>
+                
+                <form id="registrationForm" class="space-y-4">
+                    <div>
+                        <label for="playerName" class="block text-sm font-medium text-slate-300 mb-1">Full Name</label>
+                        <input type="text" id="playerName" required class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-colors" placeholder="Jane Doe">
+                    </div>
+                    <div>
+                        <label for="playerEmail" class="block text-sm font-medium text-slate-300 mb-1">Work Email</label>
+                        <input type="email" id="playerEmail" required class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-colors" placeholder="jane@example.com">
+                    </div>
+                    
+                    <div id="regError" class="text-rose-400 text-sm hidden">Please fill out all fields correctly.</div>
+                    
+                    <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-8 rounded-lg transition-all mt-4">
+                        Continue
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- SCREEN 2: Welcome / Instructions -->
+        <div id="welcomeScreen" class="p-8 text-center flex-grow flex flex-col justify-center hidden">
+            <div class="mb-6 flex justify-center">
+                <div class="bg-slate-700 p-4 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    </svg>
+                </div>
+            </div>
+            <h2 class="text-2xl font-bold mb-4">Put On Your Headphones</h2>
+            <p class="text-slate-300 mb-6 max-w-lg mx-auto">
+                This task simulates subtle audio artifacts (low rumbles, hard panning, micro-clicks). 
+                <strong>Laptop speakers will fail to reproduce these sounds accurately.</strong><br><br>
+                Listen to the TTS voice carefully. Identify the hidden audio artifact playing in the background. You have <span class="font-bold text-cyan-400" id="maxRoundsDisplay">5</span> rounds.
+            </p>
+            <button id="startBtn" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 shadow-lg shadow-cyan-500/30">
+                Acknowledge & Start
+            </button>
+        </div>
+
+        <!-- SCREEN 3: Game -->
+        <div id="gameScreen" class="hidden flex-col p-6 flex-grow">
+            <!-- Visualizer & Transcript Area -->
+            <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 mb-6 relative">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xs font-semibold tracking-widest text-slate-400 uppercase">Current Transcript</span>
+                    
+                    <!-- Fake Audio Visualizer -->
+                    <div id="visualizer" class="h-6 flex items-end gap-1 opacity-50">
+                        <div class="idle-bar"></div><div class="idle-bar"></div><div class="idle-bar"></div><div class="idle-bar"></div><div class="idle-bar"></div>
+                    </div>
+                </div>
+                
+                <p id="transcriptText" class="text-xl font-medium text-slate-200 leading-relaxed min-h-[80px]">
+                    Press "Play Audio" to load the next scenario.
+                </p>
+
+                <!-- Feedback Toast -->
+                <div id="feedbackToast" class="absolute inset-0 flex items-center justify-center bg-slate-900/95 rounded-xl hidden opacity-0 transition-opacity duration-300 z-10">
+                    <div class="text-center p-4">
+                        <div id="feedbackIcon" class="text-5xl mb-2">✅</div>
+                        <h3 id="feedbackTitle" class="text-2xl font-bold text-white mb-1">Correct!</h3>
+                        <p id="feedbackMessage" class="text-slate-300">You caught the subtle left-panned click.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls and Grid -->
+            <div class="flex flex-col md:flex-row gap-6">
+                <!-- Play Control -->
+                <div class="flex-shrink-0 flex items-center justify-center">
+                    <button id="playAudioBtn" class="bg-slate-700 hover:bg-slate-600 text-white p-6 rounded-full transition-all flex flex-col items-center gap-2 group border border-slate-600 hover:border-cyan-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-cyan-400 group-hover:text-cyan-300" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Play Audio</span>
+                    </button>
+                </div>
+
+                <!-- Answer Grid -->
+                <div class="flex-grow grid grid-cols-1 sm:grid-cols-2 gap-3" id="answerGrid">
+                    <button class="answer-btn bg-slate-800 hover:bg-slate-700 border border-slate-600 text-left p-4 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed" data-artifact="left-click" disabled>
+                        <span class="block font-bold text-slate-200">Left-Ear Click</span>
+                        <span class="text-xs text-slate-400">Subtle click in left channel</span>
+                    </button>
+                    <button class="answer-btn bg-slate-800 hover:bg-slate-700 border border-slate-600 text-left p-4 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed" data-artifact="right-click" disabled>
+                        <span class="block font-bold text-slate-200">Right-Ear Click</span>
+                        <span class="text-xs text-slate-400">Subtle click in right channel</span>
+                    </button>
+                    <button class="answer-btn bg-slate-800 hover:bg-slate-700 border border-slate-600 text-left p-4 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed" data-artifact="low-rumble" disabled>
+                        <span class="block font-bold text-slate-200">Low-Frequency Rumble</span>
+                        <span class="text-xs text-slate-400">40Hz hum (Invisible to speakers)</span>
+                    </button>
+                    <button class="answer-btn bg-slate-800 hover:bg-slate-700 border border-slate-600 text-left p-4 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed" data-artifact="clean" disabled>
+                        <span class="block font-bold text-slate-200">Clean Audio</span>
+                        <span class="text-xs text-slate-400">No artifacts detected</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mt-4 text-center">
+                <p class="text-sm text-slate-500">Round <span id="currentRoundDisplay">1</span> of <span class="maxRoundsLabel">5</span></p>
+            </div>
+        </div>
+
+        <!-- SCREEN 4: End Game & Data Submission -->
+        <div id="endScreen" class="hidden p-8 flex-grow flex flex-col justify-center relative">
+            <div class="text-center mb-6">
+                <h2 class="text-3xl font-bold text-white mb-2">Audit Complete</h2>
+                <p class="text-slate-400">Here is your performance summary.</p>
+            </div>
+
+            <div class="bg-slate-900 rounded-xl p-6 mb-6">
+                <div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-700">
+                    <span class="text-slate-300">Final Score:</span>
+                    <span class="text-2xl font-bold text-cyan-400" id="finalScoreDisplay">0 / 5</span>
+                </div>
+                <div class="max-h-48 overflow-y-auto pr-2 custom-scrollbar space-y-2 text-sm" id="itemizedScoreList">
+                    <!-- Itemized scores will be injected here -->
+                </div>
+            </div>
+
+            <!-- Submission Status Area -->
+            <div id="submissionStatus" class="bg-slate-700/50 p-4 rounded-lg flex items-center justify-center gap-3">
+                <div class="spinner" id="submitSpinner"></div>
+                <span id="submitText" class="text-slate-200 font-medium">Submitting results to server...</span>
+            </div>
+        </div>
+        
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="hidden absolute inset-0 bg-slate-900/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-slate-800 border border-slate-600 rounded-xl p-6 max-w-md w-full shadow-2xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        System Settings
+                    </h3>
+                    <button id="closeSettingsBtn" class="text-slate-400 hover:text-white transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Apps Script URL</label>
+                        <input type="text" id="scriptUrlInput" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-colors" placeholder="https://script.google.com/macros/s/.../exec">
+                        <p class="text-xs text-slate-400 mt-2">Leave blank to simulate database submission without saving.</p>
+                    </div>
+                    <button id="saveSettingsBtn" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-4 rounded-lg transition-all mt-2">Save Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        // REPLACE THE STRING BELOW WITH YOUR ACTUAL GOOGLE APPS SCRIPT WEB APP URL
+        const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec"; 
+        let APPS_SCRIPT_URL = localStorage.getItem('audioAudit_scriptUrl') || DEFAULT_SCRIPT_URL;
+        const MAX_ROUNDS = 5;
+
+        // --- Game State ---
+        let playerData = { name: '', email: '' };
+        let sessionData = []; // Stores data per round
+        let currentRound = 1;
+        let score = 0;
+        
+        let currentArtifact = null;
+        let audioCtx = null;
+        let isPlaying = false;
+        
+        // --- Transcripts Database ---
+        const transcripts = [
+            "The quick evaluation of the parameter requires strict attention to detail.",
+            "Please ensure that the customer's billing address matches the shipping address provided.",
+            "During the initial phase, we noticed several anomalies in the data stream.",
+            "The machine learning algorithm needs clean, transcribed audio to function properly.",
+            "I'm sorry, but I cannot process that request without supervisor approval.",
+            "Let's review the guidelines one more time before submitting the final report."
+        ];
+
+        const artifactTypes = ['left-click', 'right-click', 'low-rumble', 'clean'];
+
+        // --- DOM Elements ---
+        const screens = {
+            registration: document.getElementById('registrationScreen'),
+            welcome: document.getElementById('welcomeScreen'),
+            game: document.getElementById('gameScreen'),
+            end: document.getElementById('endScreen')
+        };
+        
+        const form = document.getElementById('registrationForm');
+        const regError = document.getElementById('regError');
+        const startBtn = document.getElementById('startBtn');
+        const playAudioBtn = document.getElementById('playAudioBtn');
+        const transcriptText = document.getElementById('transcriptText');
+        const answerBtns = document.querySelectorAll('.answer-btn');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const currentRoundDisplay = document.getElementById('currentRoundDisplay');
+        const visualizer = document.getElementById('visualizer');
+        const feedbackToast = document.getElementById('feedbackToast');
+        
+        // End screen elements
+        const finalScoreDisplay = document.getElementById('finalScoreDisplay');
+        const itemizedScoreList = document.getElementById('itemizedScoreList');
+        const submitSpinner = document.getElementById('submitSpinner');
+        const submitText = document.getElementById('submitText');
+        const submissionStatus = document.getElementById('submissionStatus');
+
+        // Settings modal elements
+        const settingsModal = document.getElementById('settingsModal');
+        const openSettingsBtn = document.getElementById('openSettingsBtn');
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        const scriptUrlInput = document.getElementById('scriptUrlInput');
+
+        // Setup max rounds display
+        document.getElementById('maxRoundsDisplay').textContent = MAX_ROUNDS;
+        document.querySelectorAll('.maxRoundsLabel').forEach(el => el.textContent = MAX_ROUNDS);
+
+        // --- Event Listeners ---
+        form.addEventListener('submit', handleRegistration);
+        startBtn.addEventListener('click', showGameScreen);
+        playAudioBtn.addEventListener('click', playScenario);
+        
+        // Settings listeners
+        openSettingsBtn.addEventListener('click', () => {
+            scriptUrlInput.value = APPS_SCRIPT_URL;
+            settingsModal.classList.remove('hidden');
+        });
+        closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+        saveSettingsBtn.addEventListener('click', () => {
+            APPS_SCRIPT_URL = scriptUrlInput.value.trim();
+            localStorage.setItem('audioAudit_scriptUrl', APPS_SCRIPT_URL);
+            settingsModal.classList.add('hidden');
+        });
+
+        answerBtns.forEach(btn => {
+            btn.addEventListener('click', () => handleGuess(btn.dataset.artifact));
+        });
+
+        function switchScreen(activeScreen) {
+            Object.values(screens).forEach(screen => screen.classList.add('hidden'));
+            screens[activeScreen].classList.remove('hidden');
+            screens[activeScreen].classList.add('flex'); // Maintain flex layout
+        }
+
+        function handleRegistration(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('playerName').value.trim();
+            const emailInput = document.getElementById('playerEmail').value.trim();
+
+            if (nameInput === '' || emailInput === '') {
+                regError.classList.remove('hidden');
+                return;
+            }
+            
+            playerData.name = nameInput;
+            playerData.email = emailInput;
+            regError.classList.add('hidden');
+            
+            switchScreen('welcome');
+        }
+
+        function showGameScreen() {
+            initAudioContext();
+            switchScreen('game');
+            updateScoreDisplay();
+            loadNextScenario();
+        }
+
+        function initAudioContext() {
+            if (!audioCtx) {
+                // Must be initialized after a user gesture
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function createSubtleClick(panValue) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            const panner = audioCtx.createStereoPanner();
+
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            
+            // Envelope for a sharp click
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+            
+            panner.pan.value = panValue;
+
+            osc.connect(gainNode);
+            gainNode.connect(panner);
+            panner.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function createLowRumble() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(45, audioCtx.currentTime); 
+            
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.5);
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime + 1.5);
+            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 2.0);
+
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 2.1);
+        }
+
+        function loadNextScenario() {
+            currentRoundDisplay.textContent = currentRound;
+            const randomText = transcripts[Math.floor(Math.random() * transcripts.length)];
+            currentArtifact = artifactTypes[Math.floor(Math.random() * artifactTypes.length)];
+            
+            transcriptText.textContent = randomText;
+            transcriptText.dataset.text = randomText; 
+            
+            enableAnswerButtons(false);
+            playAudioBtn.disabled = false;
+            playAudioBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        function playScenario() {
+            if (isPlaying) return;
+            initAudioContext();
+            
+            isPlaying = true;
+            playAudioBtn.disabled = true;
+            playAudioBtn.classList.add('opacity-50', 'cursor-not-allowed', 'neon-border');
+            setVisualizerState(true);
+            enableAnswerButtons(false);
+
+            window.speechSynthesis.cancel(); 
+
+            const text = transcriptText.dataset.text;
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            utterance.rate = 0.95; 
+            utterance.pitch = 1.0;
+
+            const estimatedDurationMs = (text.length / 15) * 1000;
+            const injectTime = Math.random() * (estimatedDurationMs * 0.5) + (estimatedDurationMs * 0.2); 
+
+            let artifactTimeout;
+
+            utterance.onstart = () => {
+                artifactTimeout = setTimeout(() => {
+                    triggerArtifact(currentArtifact);
+                }, injectTime);
+            };
+
+            utterance.onend = () => {
+                isPlaying = false;
+                setVisualizerState(false);
+                playAudioBtn.classList.remove('neon-border');
+                enableAnswerButtons(true);
+                clearTimeout(artifactTimeout);
+            };
+
+            utterance.onerror = () => {
+                isPlaying = false;
+                setVisualizerState(false);
+                enableAnswerButtons(true);
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function triggerArtifact(type) {
+            switch(type) {
+                case 'left-click': createSubtleClick(-1); break;
+                case 'right-click': createSubtleClick(1); break;
+                case 'low-rumble': createLowRumble(); break;
+                case 'clean': break;
+            }
+        }
+
+        function handleGuess(guessedArtifact) {
+            let isCorrect = (guessedArtifact === currentArtifact);
+            if (isCorrect) score++;
+            
+            // Record data for this round
+            sessionData.push({
+                round: currentRound,
+                transcript: transcriptText.dataset.text,
+                actualArtifact: getArtifactName(currentArtifact),
+                guessedArtifact: getArtifactName(guessedArtifact),
+                isCorrect: isCorrect
+            });
+
+            showFeedback(isCorrect, guessedArtifact);
+            updateScoreDisplay();
+            
+            setTimeout(() => {
+                hideFeedback();
+                
+                if (currentRound >= MAX_ROUNDS) {
+                    endGame();
+                } else {
+                    currentRound++;
+                    loadNextScenario();
+                }
+            }, 2500);
+        }
+
+        function updateScoreDisplay() {
+            scoreDisplay.textContent = `${score} / ${currentRound - 1 > 0 ? currentRound - 1 : (currentRound===1 && sessionData.length===0 ? 0 : currentRound)}`;
+            // Edge case handling for display before round 1 completes
+            if(sessionData.length > 0) {
+                 scoreDisplay.textContent = `${score} / ${sessionData.length}`;
+            } else {
+                 scoreDisplay.textContent = `0 / 0`;
+            }
+        }
+
+        function showFeedback(isCorrect, guess) {
+            feedbackToast.classList.remove('hidden');
+            setTimeout(() => {
+                feedbackToast.classList.remove('opacity-0');
+                feedbackToast.classList.add('opacity-100');
+            }, 10);
+
+            const title = document.getElementById('feedbackTitle');
+            const msg = document.getElementById('feedbackMessage');
+            const icon = document.getElementById('feedbackIcon');
+
+            if (isCorrect) {
+                icon.textContent = "✅";
+                title.textContent = "Accurate Rating!";
+                title.className = "text-2xl font-bold text-emerald-400 mb-1";
+                msg.textContent = `You correctly identified: ${getArtifactName(currentArtifact)}`;
+            } else {
+                icon.textContent = "❌";
+                title.textContent = "Missed Artifact!";
+                title.className = "text-2xl font-bold text-rose-400 mb-1";
+                msg.innerHTML = `You guessed <strong>${getArtifactName(guess)}</strong>.<br>The actual audio was: <strong>${getArtifactName(currentArtifact)}</strong>.`;
+            }
+
+            enableAnswerButtons(false);
+            playAudioBtn.disabled = true;
+        }
+
+        function hideFeedback() {
+            feedbackToast.classList.remove('opacity-100');
+            feedbackToast.classList.add('opacity-0');
+            setTimeout(() => feedbackToast.classList.add('hidden'), 300);
+        }
+
+        function endGame() {
+            switchScreen('end');
+            
+            // Populate end screen stats
+            finalScoreDisplay.textContent = `${score} / ${MAX_ROUNDS}`;
+            
+            itemizedScoreList.innerHTML = sessionData.map(data => `
+                <div class="flex justify-between items-center bg-slate-800 p-3 rounded border ${data.isCorrect ? 'border-emerald-900/50' : 'border-rose-900/50'}">
+                    <div>
+                        <div class="font-bold text-slate-200">Round ${data.round}</div>
+                        <div class="text-xs text-slate-400">Actual: ${data.actualArtifact}</div>
+                    </div>
+                    <div>
+                        ${data.isCorrect 
+                            ? '<span class="text-emerald-400 text-lg">✅</span>' 
+                            : `<span class="text-rose-400 text-sm">Guessed: ${data.guessedArtifact} ❌</span>`}
+                    </div>
+                </div>
+            `).join('');
+
+            submitDataToAppScript();
+        }
+
+        function submitDataToAppScript() {
+            if (!APPS_SCRIPT_URL) {
+                setTimeout(() => {
+                    submitSpinner.style.display = 'none';
+                    submissionStatus.className = 'bg-amber-900/30 border border-amber-800 p-4 rounded-lg flex items-center justify-center gap-3 text-amber-400';
+                    submitText.innerHTML = "⚠️ Audit complete (No AppScript URL configured, simulation only).";
+                }, 1000);
+                return;
+            }
+
+            const payload = {
+                timestamp: new Date().toISOString(),
+                player: playerData,
+                finalScore: score,
+                maxRounds: MAX_ROUNDS,
+                roundDetails: sessionData
+            };
+
+            // Using standard fetch POST. 
+            // NOTE: Content-Type text/plain avoids CORS preflight checks in Google Apps Script
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8',
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                // If using 'no-cors' mode (sometimes needed), response.ok will be false and status 0.
+                // Assuming standard configuration where text/plain avoids preflight.
+                submitSpinner.style.display = 'none';
+                submissionStatus.className = 'bg-emerald-900/30 border border-emerald-800 p-4 rounded-lg flex items-center justify-center gap-3 text-emerald-400';
+                submitText.innerHTML = "✅ Results successfully saved to database.";
+            })
+            .catch(error => {
+                console.error("Submission Error:", error);
+                submitSpinner.style.display = 'none';
+                // Show a warning but don't break the UI if the URL wasn't configured
+                submissionStatus.className = 'bg-amber-900/30 border border-amber-800 p-4 rounded-lg flex items-center justify-center gap-3 text-amber-400';
+                submitText.innerHTML = "⚠️ Audit complete (AppScript URL not configured or blocked).";
+            });
+        }
+
+        // --- Helpers ---
+        function enableAnswerButtons(enable) {
+            answerBtns.forEach(btn => btn.disabled = !enable);
+        }
+
+        function setVisualizerState(active) {
+            visualizer.innerHTML = active 
+                ? `<div class="bar h-[10px]"></div><div class="bar h-[18px]"></div><div class="bar h-[14px]"></div><div class="bar h-[22px]"></div><div class="bar h-[8px]"></div>`
+                : `<div class="idle-bar"></div><div class="idle-bar"></div><div class="idle-bar"></div><div class="idle-bar"></div><div class="idle-bar"></div>`;
+            visualizer.classList.toggle('opacity-50', !active);
+        }
+
+        function getArtifactName(id) {
+            const names = {
+                'left-click': 'Left-Ear Click',
+                'right-click': 'Right-Ear Click',
+                'low-rumble': 'Low-Frequency Rumble',
+                'clean': 'Clean Audio'
+            };
+            return names[id] || id;
+        }
+
+        // Cleanup on unload
+        window.addEventListener('beforeunload', () => window.speechSynthesis.cancel());
+    </script>
+</body>
+</html>
